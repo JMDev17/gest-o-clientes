@@ -62,7 +62,13 @@ export function AuthProvider({ children }) {
       console.error('[Supabase] Client não inicializado — verifique VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no .env.local')
       return { needsConfirmation: false }
     }
-    const { data, error } = await supabase.auth.signUp({ email, password })
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/login`,
+      },
+    })
     if (error) throw error
 
     // Quando a confirmação de e-mail está ativa e o e-mail já existe,
