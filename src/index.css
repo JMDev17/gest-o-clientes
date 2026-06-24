@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  html {
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+  }
+}
+
+/* Fora de @layer — prioridade máxima no cascade, não pode ser sobrescrito por utilitários */
+.dark body {
+  background-color: rgb(3 7 18);   /* gray-950 */
+  color: rgb(243 244 246);         /* gray-100 */
+}
