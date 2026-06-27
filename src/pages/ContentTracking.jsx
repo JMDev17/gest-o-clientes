@@ -40,7 +40,7 @@ export default function ContentTracking() {
 
   useEffect(() => {
     fetchLogs(weekBounds.startStr, weekBounds.endStr)
-  }, [weekBounds.startStr, weekBounds.endStr]) // eslint-disable-line
+  }, [weekBounds.startStr, weekBounds.endStr, fetchLogs])
 
   const allClientsData = useMemo(() => {
     const planClientIds = new Set(plans.map(p => p.client_id))

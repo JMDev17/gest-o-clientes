@@ -22,7 +22,7 @@ function sortByDueDate(list) {
     if (!a.due_date && !b.due_date) return 0
     if (!a.due_date) return 1
     if (!b.due_date) return -1
-    return new Date(b.due_date) - new Date(a.due_date)
+    return new Date(a.due_date) - new Date(b.due_date)
   })
 }
 
@@ -40,7 +40,7 @@ export function usePayments() {
     const { data, error: err } = await supabase
       .from('payments')
       .select('*, client:clients(id, name, company_name, whatsapp)')
-      .order('due_date', { ascending: false, nullsFirst: false })
+      .order('due_date', { ascending: true, nullsFirst: false })
 
     if (err) {
       setError('Não foi possível carregar os pagamentos.')

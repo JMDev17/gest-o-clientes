@@ -31,6 +31,7 @@ export default function ClientDetails() {
   const [tasks, setTasks]                         = useState([])
   const [loading, setLoading]                     = useState(true)
   const [error, setError]                         = useState(null)
+  const [dataError, setDataError]                 = useState(null)
   const [editOpen, setEditOpen]                   = useState(false)
   const [registeringSession, setRegisteringSession] = useState(false)
   const [sessionError, setSessionError]           = useState(null)
@@ -64,9 +65,7 @@ export default function ClientDetails() {
       setContracts(cos || [])
       setPayments(pys || [])
       setTasks(tks || [])
-      if (e2) console.warn('contracts fetch error', e2)
-      if (e3) console.warn('payments fetch error', e3)
-      if (e4) console.warn('tasks fetch error', e4)
+      if (e2 || e3 || e4) setDataError('Alguns dados secundários não puderam ser carregados.')
       setLoading(false)
     }
     load()
@@ -222,6 +221,13 @@ export default function ClientDetails() {
           </div>
         )}
       </div>
+
+      {dataError && (
+        <div role="alert" className="mb-4 flex items-center gap-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
+          <AlertCircle size={14} className="shrink-0" />
+          {dataError}
+        </div>
+      )}
 
       {/* Data sections */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">

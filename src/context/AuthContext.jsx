@@ -46,10 +46,7 @@ export function AuthProvider({ children }) {
   }, [])
 
   async function signInWithEmail(email, password) {
-    if (!isConfigured) {
-      console.error('[Supabase] Client não inicializado — verifique VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no .env.local')
-      return
-    }
+    if (!isConfigured) return
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw error
   }
@@ -58,10 +55,7 @@ export function AuthProvider({ children }) {
   // needsConfirmation = true  → Supabase exige verificação de e-mail
   // needsConfirmation = false → sessão criada imediatamente (auto-confirm ativo)
   async function signUp(email, password) {
-    if (!isConfigured) {
-      console.error('[Supabase] Client não inicializado — verifique VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no .env.local')
-      return { needsConfirmation: false }
-    }
+    if (!isConfigured) return { needsConfirmation: false }
     const { data, error } = await supabase.auth.signUp({
       email,
       password,

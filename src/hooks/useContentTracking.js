@@ -27,7 +27,7 @@ export function useContentTracking() {
 
   useEffect(() => { fetchPlans() }, [fetchPlans])
 
-  async function fetchLogs(startDate, endDate) {
+  const fetchLogs = useCallback(async (startDate, endDate) => {
     if (!user) return
     weekRangeRef.current = { start: startDate, end: endDate }
     setLoadingLogs(true)
@@ -40,7 +40,7 @@ export function useContentTracking() {
     if (err) setError('Não foi possível carregar os registros de conteúdo.')
     else setLogs(data ?? [])
     setLoadingLogs(false)
-  }
+  }, [user])
 
   // Upsert plan for a client (insert if new, update if existing)
   async function savePlan(clientId, fields) {
@@ -52,7 +52,7 @@ export function useContentTracking() {
         .eq('id', existing.id)
         .select('*, client:clients(id, name, company_name)')
         .single()
-      if (err) { console.error('[useContentTracking] savePlan update:', err); throw err }
+      if (err) throw err
       setPlans(prev => prev.map(p => (p.id === existing.id ? data : p)))
     } else {
       const { data, error: err } = await supabase
@@ -60,7 +60,7 @@ export function useContentTracking() {
         .insert({ ...fields, client_id: clientId, user_id: user.id })
         .select('*, client:clients(id, name, company_name)')
         .single()
-      if (err) { console.error('[useContentTracking] savePlan insert:', err); throw err }
+      if (err) throw err
       setPlans(prev => [...prev, data])
     }
   }
@@ -77,7 +77,7 @@ export function useContentTracking() {
       .insert({ ...fields, user_id: user.id })
       .select('*, client:clients(id, name)')
       .single()
-    if (err) { console.error('[useContentTracking] createLog:', err); throw err }
+    if (err) throw err
     const range = weekRangeRef.current
     if (range && data.performed_at >= range.start && data.performed_at <= range.end) {
       setLogs(prev => [...prev, data].sort((a, b) => a.performed_at.localeCompare(b.performed_at)))
@@ -92,7 +92,7 @@ export function useContentTracking() {
       .eq('id', id)
       .select('*, client:clients(id, name)')
       .single()
-    if (err) { console.error('[useContentTracking] updateLog:', err); throw err }
+    if (err) throw err
     const range = weekRangeRef.current
     setLogs(prev => {
       const without = prev.filter(l => l.id !== id)
@@ -113,7 +113,7 @@ export function useContentTracking() {
       .from('content_logs')
       .insert(rows)
       .select('*, client:clients(id, name)')
-    if (err) { console.error('[useContentTracking] createMultipleLogs:', err); throw err }
+    if (err) throw err
     const range = weekRangeRef.current
     if (range) {
       const inRange = (data ?? []).filter(l => l.performed_at >= range.start && l.performed_at <= range.end)
@@ -126,7 +126,7 @@ export function useContentTracking() {
 
   async function deleteLog(id) {
     const { error: err } = await supabase.from('content_logs').delete().eq('id', id)
-    if (err) { console.error('[useContentTracking] deleteLog:', err); throw err }
+    if (err) throw err
     setLogs(prev => prev.filter(l => l.id !== id))
   }
 

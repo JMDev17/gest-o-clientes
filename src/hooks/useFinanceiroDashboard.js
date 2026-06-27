@@ -22,10 +22,12 @@ export function useFinanceiroDashboard() {
   const [transactions, setTransactions] = useState([])
   const [clientPayments, setClientPayments] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   const fetchAll = useCallback(async () => {
     if (!user) { setLoading(false); return }
     setLoading(true)
+    setError(null)
 
     const [txRes, pmtRes] = await Promise.all([
       supabase
@@ -38,6 +40,9 @@ export function useFinanceiroDashboard() {
         .order('paid_date', { ascending: false }),
     ])
 
+    if (txRes.error || pmtRes.error) {
+      setError('Não foi possível carregar os dados financeiros.')
+    }
     setTransactions(txRes.data ?? [])
     setClientPayments(pmtRes.data ?? [])
     setLoading(false)
@@ -129,5 +134,5 @@ export function useFinanceiroDashboard() {
     }
   }, [transactions, clientPayments])
 
-  return { ...DEFAULTS, ...computed, loading, refetch: fetchAll }
+  return { ...DEFAULTS, ...computed, loading, error, refetch: fetchAll }
 }
