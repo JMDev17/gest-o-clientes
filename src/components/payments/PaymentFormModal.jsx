@@ -215,8 +215,13 @@ export default function PaymentFormModal({ initialData, clients, onSubmit, onClo
       clearDraft()
       setIsDirty(false)
       onClose()
-    } catch {
-      setSubmitError('Não foi possível salvar. Tente novamente.')
+    } catch (err) {
+      console.error('[PaymentFormModal] save error:', err)
+      setSubmitError(
+        err?.message
+          ? `Erro ao salvar: ${err.message}`
+          : 'Não foi possível salvar. Tente novamente.'
+      )
       setSaving(false)
     }
   }
