@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react'
-import { Plus } from 'lucide-react'
+import { useState, useMemo, useEffect } from 'react'
+import { Plus, CheckCircle2 } from 'lucide-react'
 import Layout from '../components/Layout.jsx'
 import PaymentSummaryCards from '../components/payments/PaymentSummaryCards.jsx'
 import PaymentFilters from '../components/payments/PaymentFilters.jsx'
@@ -10,6 +10,9 @@ import { usePayments, effectiveStatus } from '../hooks/usePayments.js'
 import { useClients } from '../hooks/useClients.js'
 import { useWorkspace } from '../hooks/useWorkspace.js'
 import { formatCurrency } from '../utils/formatCurrency.js'
+
+// Columns set on creation only — should not be overwritten when editing a payment.
+const IMMUTABLE_COLS = ['payment_type', 'installment_number', 'total_installments', 'recurrence_frequency']
 
 function currentMonthKey() {
   const now = new Date()
@@ -32,6 +35,13 @@ export default function Payments() {
   const [deleting, setDeleting]             = useState(false)
   const [deleteError, setDeleteError]       = useState(null)
   const [whatsappTarget, setWhatsappTarget] = useState(null)
+  const [successMsg, setSuccessMsg]         = useState(null)
+
+  useEffect(() => {
+    if (!successMsg) return
+    const t = setTimeout(() => setSuccessMsg(null), 4000)
+    return () => clearTimeout(t)
+  }, [successMsg])
 
   const filtered = useMemo(() => payments.filter(p => {
     const matchStatus = !statusFilter || effectiveStatus(p) === statusFilter
@@ -53,8 +63,18 @@ export default function Payments() {
   function closeDelete()        { setDeleteTarget(null); setDeleteError(null) }
 
   async function handleSubmit(records) {
-    if (editing) await updatePayment(editing.id, records[0])
-    else         await createPayments(records)
+    if (editing) {
+      // Strip migration-only columns — they're set on creation and should not be overwritten on edit.
+      const fields = Object.fromEntries(
+        Object.entries(records[0]).filter(([k]) => !IMMUTABLE_COLS.includes(k))
+      )
+      await updatePayment(editing.id, fields)
+      setSuccessMsg('Pagamento atualizado.')
+    } else {
+      await createPayments(records)
+      const n = records.length
+      setSuccessMsg(n > 1 ? `${n} pagamentos criados com sucesso.` : 'Pagamento criado com sucesso.')
+    }
   }
 
   async function handleDelete() {
@@ -77,6 +97,17 @@ export default function Payments() {
 
       {/* Resumo financeiro */}
       <PaymentSummaryCards payments={payments} />
+
+      {/* Notificação de sucesso */}
+      {successMsg && (
+        <div
+          role="status"
+          className="mb-4 flex items-center gap-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 px-4 py-3 text-sm font-medium text-emerald-700 dark:text-emerald-400"
+        >
+          <CheckCircle2 size={15} className="shrink-0" />
+          {successMsg}
+        </div>
+      )}
 
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-4 mb-5">

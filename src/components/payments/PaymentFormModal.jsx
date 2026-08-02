@@ -217,10 +217,12 @@ export default function PaymentFormModal({ initialData, clients, onSubmit, onClo
       onClose()
     } catch (err) {
       console.error('[PaymentFormModal] save error:', err)
+      const msg = err?.message ?? ''
+      const isNetwork = !msg || msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('ERR_NAME')
       setSubmitError(
-        err?.message
-          ? `Erro ao salvar: ${err.message}`
-          : 'Não foi possível salvar. Tente novamente.'
+        isNetwork
+          ? 'Sem conexão com o servidor. Verifique se o projeto Supabase está ativo em supabase.com/dashboard.'
+          : `Erro ao salvar: ${msg}`
       )
       setSaving(false)
     }

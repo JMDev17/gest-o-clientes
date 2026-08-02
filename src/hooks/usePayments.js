@@ -3,6 +3,15 @@ import { supabase } from '../lib/supabaseClient.js'
 import { useAuth } from './useAuth.js'
 import { isBeforeToday } from '../utils/dateHelpers.js'
 
+// Columns added by migrations — may not exist in all environments.
+const MIGRATION_COLS = ['payment_type', 'installment_number', 'total_installments', 'recurrence_frequency']
+
+function stripMigrationCols(row) {
+  const r = { ...row }
+  MIGRATION_COLS.forEach(c => delete r[c])
+  return r
+}
+
 export const PAYMENT_STATUS = [
   { value: 'pendente',  label: 'Pendente',  style: 'bg-amber-50 text-amber-700 ring-amber-200' },
   { value: 'pago',      label: 'Pago',      style: 'bg-emerald-50 text-emerald-700 ring-emerald-200' },
@@ -64,10 +73,23 @@ export function usePayments() {
 
   async function createPayments(records) {
     const rows = records.map(r => ({ ...r, user_id: user.id }))
-    const { data, error: err } = await supabase
+
+    let { data, error: err } = await supabase
       .from('payments')
       .insert(rows)
       .select('*, client:clients(id, name, company_name, whatsapp)')
+
+    // If migration columns don't exist in the DB yet, retry with the base schema.
+    // Run supabase/migrations/payments_columns_fix.sql to enable full payment-type tracking.
+    if (err?.message?.includes('does not exist')) {
+      console.warn('[usePayments] Migration columns missing — retrying with base schema. Run supabase/migrations/payments_columns_fix.sql.')
+      const baseRows = rows.map(stripMigrationCols)
+      ;({ data, error: err } = await supabase
+        .from('payments')
+        .insert(baseRows)
+        .select('*, client:clients(id, name, company_name, whatsapp)'))
+    }
+
     if (err) throw err
     setPayments(prev => sortByDueDate([...prev, ...data]))
   }
